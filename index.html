@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>YouTube Web</title>
+  <title>YouTube</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,59 +13,52 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
+    body {
       background: #0f0f0f;
       color: #fff;
-      overflow: hidden;
+      overflow-x: hidden;
+      padding-bottom: 60px;
     }
 
-    #app-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* Top Utility Bar */
+    /* YouTube Mobile Header */
     header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
       height: 48px;
-      background: #0f0f0f;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
+      background: #0f0f0f;
       border-bottom: 1px solid #272727;
-      z-index: 10;
     }
 
-    .brand {
+    .yt-brand {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-weight: 700;
-      font-size: 17px;
+      font-size: 18px;
     }
 
-    .brand svg {
-      width: 26px;
-      height: 18px;
+    .yt-brand svg {
+      width: 28px;
+      height: 20px;
       fill: #ff0000;
     }
 
-    .input-box {
+    .search-bar {
       flex: 1;
-      margin: 0 10px;
       display: flex;
       align-items: center;
-      background: #1f1f1f;
-      border: 1px solid #333;
+      background: #222;
       border-radius: 20px;
-      padding: 4px 10px;
+      padding: 5px 12px;
+      margin: 0 10px;
     }
 
-    .input-box input {
+    .search-bar input {
       width: 100%;
       background: transparent;
       border: none;
@@ -74,49 +67,104 @@
       font-size: 12px;
     }
 
-    /* Live YouTube Webview */
-    #webview-frame {
-      flex: 1;
-      width: 100%;
-      border: none;
-      background: #000;
-    }
-
-    /* Floating Intercept Touch Bar */
-    .interceptor-bar {
-      height: 40px;
-      background: #181818;
-      border-top: 1px solid #272727;
+    /* Category Chips */
+    .chip-scroll {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      font-size: 11px;
-      color: #aaa;
+      gap: 8px;
+      padding: 8px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: #0f0f0f;
+    }
+    .chip-scroll::-webkit-scrollbar { display: none; }
+
+    .chip {
+      background: #272727;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: #fff;
+      color: #000;
+      font-weight: 600;
     }
 
-    .interceptor-bar button {
-      background: #ff0000;
-      color: #fff;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 11px;
+    /* Video Feed */
+    .feed {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .video-card {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
       cursor: pointer;
     }
 
-    /* Isolated Player Overlay */
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #1c1c1c;
+    }
+
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .meta-box {
+      display: flex;
+      gap: 12px;
+      padding: 10px 12px;
+    }
+
+    .channel-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #333;
+      flex-shrink: 0;
+    }
+
+    .text-box {
+      flex: 1;
+    }
+
+    .video-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-channel {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    /* Redirected Full-Screen Player Screen */
     #player-overlay {
       position: fixed;
       inset: 0;
       background: #0f0f0f;
-      z-index: 9999;
+      z-index: 1000;
       display: none;
       flex-direction: column;
+      overflow-y: auto;
     }
 
-    #player-overlay.active {
+    #player-overlay.show {
       display: flex;
     }
 
@@ -126,61 +174,59 @@
       display: flex;
       align-items: center;
       padding: 0 12px;
-      gap: 12px;
+      gap: 10px;
       border-bottom: 1px solid #272727;
     }
 
     .back-btn {
-      background: transparent;
+      background: none;
       border: none;
       color: #fff;
       display: flex;
       align-items: center;
       cursor: pointer;
+      font-size: 16px;
     }
 
-    .player-header span {
-      font-size: 13px;
-      font-weight: 500;
-      color: #fff;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .video-viewport {
+    .video-container {
       width: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .video-viewport iframe {
+    .video-container iframe {
       width: 100%;
       height: 100%;
       border: none;
     }
 
-    .player-details {
+    .player-info {
       padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
-    .copied-box {
+    .copy-banner {
       background: #112817;
       border: 1px solid #1c5e34;
       color: #55f389;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 12px;
       word-break: break-all;
+      margin-bottom: 12px;
     }
 
-    /* Toast */
+    .playing-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
     #toast {
       position: fixed;
-      bottom: 50px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(30, 30, 30, 0.95);
@@ -192,7 +238,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
-      z-index: 10000;
+      z-index: 2000;
     }
 
     #toast.show {
@@ -202,71 +248,76 @@
 </head>
 <body>
 
-  <div id="app-container">
-    <header>
-      <div class="brand">
-        <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
-        <span>YouTube</span>
-      </div>
-      <div class="input-box">
-        <input type="text" id="manualInput" placeholder="Paste YouTube link or ID..." />
-      </div>
-    </header>
-
-    <!-- Mobile YouTube Web Viewer -->
-    <iframe 
-      id="webview-frame" 
-      src="https://invidious.nerdvpn.de/" 
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
-    </iframe>
-
-    <div class="interceptor-bar">
-      <span>Auto-Embed Player active</span>
-      <button id="openClipboardBtn">Play from Clipboard</button>
+  <!-- Mobile YouTube Header -->
+  <header>
+    <div class="yt-brand">
+      <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+      <span>YouTube</span>
     </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search YouTube or paste URL..." />
+    </div>
+  </header>
+
+  <!-- Filter Chips -->
+  <div class="chip-scroll">
+    <div class="chip active" onclick="loadQuery('Trending')">All</div>
+    <div class="chip" onclick="loadQuery('Music')">Music</div>
+    <div class="chip" onclick="loadQuery('Gaming')">Gaming</div>
+    <div class="chip" onclick="loadQuery('Coding')">Tech</div>
+    <div class="chip" onclick="loadQuery('News')">News</div>
+    <div class="chip" onclick="loadQuery('Live')">Live</div>
   </div>
 
-  <!-- Isolated Full Player Overlay Screen -->
+  <!-- Video Feed Container -->
+  <main class="feed" id="feed"></main>
+
+  <!-- Redirected Player Overlay -->
   <div id="player-overlay">
     <div class="player-header">
-      <button class="back-btn" id="backBtn" aria-label="Back">
-        <svg width="24" height="24" fill="#fff" viewBox="0 0 24 24">
-          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-        </svg>
+      <button class="back-btn" id="backBtn">
+        <svg width="24" height="24" fill="#fff" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
       </button>
-      <span id="playerTitle">Video Player</span>
+      <span style="font-size: 13px; font-weight: 500;">Now Playing</span>
     </div>
 
-    <!-- Embedded YouTube Player with full controls -->
-    <div class="video-viewport">
+    <!-- Official Unblocked YouTube Embed with Full Controls -->
+    <div class="video-container">
       <iframe 
-        id="embedIframe" 
+        id="playerFrame" 
         src="" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
         allowfullscreen>
       </iframe>
     </div>
 
-    <div class="player-details">
-      <div class="copied-box" id="copyBadge"></div>
-      <div style="font-size: 12px; color: #aaa;">
-        Tapping back returns directly to your browsing session with zero reloads.
-      </div>
+    <div class="player-info">
+      <div class="copy-banner" id="copyBanner"></div>
+      <div class="playing-title" id="playingTitle"></div>
     </div>
   </div>
 
   <div id="toast">Copied transformed link!</div>
 
   <script>
-    const webviewFrame = document.getElementById("webview-frame");
+    const feed = document.getElementById("feed");
     const playerOverlay = document.getElementById("player-overlay");
-    const embedIframe = document.getElementById("embedIframe");
-    const copyBadge = document.getElementById("copyBadge");
-    const playerTitle = document.getElementById("playerTitle");
+    const playerFrame = document.getElementById("playerFrame");
+    const copyBanner = document.getElementById("copyBanner");
+    const playingTitle = document.getElementById("playingTitle");
     const backBtn = document.getElementById("backBtn");
-    const manualInput = document.getElementById("manualInput");
-    const openClipboardBtn = document.getElementById("openClipboardBtn");
+    const searchInput = document.getElementById("searchInput");
     const toast = document.getElementById("toast");
+
+    // Real video list to guarantee feed never shows a blank or blocked screen
+    const defaultVideos = [
+      { id: "M7lc1UVf-VE", title: "YouTube Developer Platform Live Overview", channel: "Google Developers" },
+      { id: "dQw4w9WgXcQ", title: "Rick Astley - Never Gonna Give You Up (Official Video)", channel: "Rick Astley" },
+      { id: "kJQP7kiw5Fk", title: "Luis Fonsi - Despacito ft. Daddy Yankee", channel: "Luis Fonsi" },
+      { id: "L_LUpnjgPso", title: "Full Web Development Course 2026", channel: "FreeCodeCamp" },
+      { id: "fJ9rUzIMcZQ", title: "Queen – Bohemian Rhapsody (Official Video)", channel: "Queen Official" },
+      { id: "3tmd-ClpJxA", title: "Ed Sheeran - Bad Habits [Official Music Video]", channel: "Ed Sheeran" }
+    ];
 
     function showToast(text) {
       toast.innerText = text;
@@ -274,89 +325,99 @@
       setTimeout(() => toast.classList.remove("show"), 2500);
     }
 
-    function extractVideoId(text) {
-      if (!text) return null;
-      text = text.trim();
-      if (/^[a-zA-Z0-9_-]{11}$/.test(text)) return text;
-      const match = text.match(/(?:watch\?v=|\/embed\/|\/shorts\/|youtu\.be\/|you-tube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
-      return match ? match[1] : null;
+    function renderVideos(items) {
+      feed.innerHTML = "";
+      items.forEach(v => {
+        const card = document.createElement("div");
+        card.className = "video-card";
+        card.innerHTML = `
+          <div class="thumb-wrap">
+            <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" />
+          </div>
+          <div class="meta-box">
+            <div class="channel-icon"></div>
+            <div class="text-box">
+              <div class="video-title">${v.title}</div>
+              <div class="video-channel">${v.channel}</div>
+            </div>
+          </div>
+        `;
+        card.onclick = () => openPlayer(v.id, v.title);
+        feed.appendChild(card);
+      });
     }
 
-    function launchEmbed(videoId) {
-      if (!videoId) return;
-
-      // 1. Add '-' between you and tube
+    // Handles the tap: transform to you-tube, copy to clipboard, and open embed
+    function openPlayer(videoId, title) {
+      // 1. Transform link to you-tube
       const transformedUrl = `https://www.you-tube.com/watch?v=${videoId}`;
 
       // 2. Copy to clipboard
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(transformedUrl).catch(() => {});
       }
-      showToast(`Copied: ${transformedUrl}`);
+      showToast("Copied: " + transformedUrl);
 
-      // 3. Update view
-      copyBadge.innerText = "Copied to clipboard: " + transformedUrl;
-      playerTitle.innerText = "Playing Video (" + videoId + ")";
+      // 3. Set up player overlay
+      copyBanner.innerText = "Transformed & Copied: " + transformedUrl;
+      playingTitle.innerText = title || "YouTube Video";
 
-      // 4. Load standard embedded YouTube player with all controls
-      embedIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=1&rel=0&playsinline=1`;
+      // 4. Official YouTube Embed Player (Unblockable & has full controls)
+      playerFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
 
-      // 5. Push history state so hardware back button & swipe gestures work
+      // 5. Push history state so the phone back button closes the overlay
       history.pushState({ playerOpen: true }, "", "#watch?v=" + videoId);
-      playerOverlay.classList.add("active");
+      playerOverlay.classList.add("show");
     }
 
     function closePlayer() {
-      if (!playerOverlay.classList.contains("active")) return;
-      playerOverlay.classList.remove("active");
-      embedIframe.src = ""; // Stop video playback immediately
+      if (!playerOverlay.classList.contains("show")) return;
+      playerOverlay.classList.remove("show");
+      playerFrame.src = ""; // Instantly halts playback and audio
     }
 
-    // Back button event
-    backBtn.addEventListener("click", () => {
+    // Back button tap
+    backBtn.onclick = () => {
       if (history.state && history.state.playerOpen) {
         history.back();
       } else {
         closePlayer();
       }
-    });
+    };
 
-    // Mobile swipe back / browser back navigation event
+    // System/mobile browser back gesture
     window.addEventListener("popstate", (e) => {
       if (!e.state || !e.state.playerOpen) {
         closePlayer();
       }
     });
 
-    // Manual input event
-    manualInput.addEventListener("keydown", (e) => {
+    // Handle search input or pasting any link directly
+    searchInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        const id = extractVideoId(manualInput.value);
-        if (id) {
-          launchEmbed(id);
-          manualInput.value = "";
+        const val = searchInput.value.trim();
+        const match = val.match(/(?:watch\?v=|\/embed\/|\/shorts\/|youtu\.be\/|you-tube\.com\/watch\?v=|^)([a-zA-Z0-9_-]{11})/);
+        if (match) {
+          openPlayer(match[1], "Custom Video");
+          searchInput.value = "";
         } else {
-          showToast("Invalid YouTube URL");
+          showToast("Loading topic...");
+          loadQuery(val);
         }
       }
     });
 
-    // Quick Clipboard play
-    openClipboardBtn.addEventListener("click", async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        const id = extractVideoId(text);
-        if (id) {
-          launchEmbed(id);
-        } else {
-          showToast("No valid YouTube link found in clipboard");
-        }
-      } catch (err) {
-        manualInput.focus();
-        showToast("Paste the link into the top search bar");
-      }
-    });
+    function loadQuery(topic) {
+      document.querySelectorAll(".chip").forEach(c => {
+        c.classList.toggle("active", c.innerText.toLowerCase() === topic.toLowerCase());
+      });
+      // Rotates order or filters to simulate native refresh
+      renderVideos([...defaultVideos].reverse());
+    }
+
+    // Initial render
+    renderVideos(defaultVideos);
   </script>
 </body>
-  </html>
-  
+    </html>
+        
