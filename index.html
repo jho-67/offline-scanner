@@ -1,423 +1,551 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>YouTube</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Bypass Browser Simulator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#FF0000',
+              dark: '#0f0f0f',
+              card: '#1f1f1f',
+              border: '#333333'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
     body {
-      background: #0f0f0f;
-      color: #fff;
-      overflow-x: hidden;
-      padding-bottom: 60px;
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: 'Inter', sans-serif;
     }
-
-    /* YouTube Mobile Header */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      background: #0f0f0f;
-      border-bottom: 1px solid #272727;
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-
-    .yt-brand {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-weight: 700;
-      font-size: 18px;
+    ::-webkit-scrollbar-track {
+      background: #18181b;
     }
-
-    .yt-brand svg {
-      width: 28px;
-      height: 20px;
-      fill: #ff0000;
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 3px;
     }
-
-    .search-bar {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      background: #222;
-      border-radius: 20px;
-      padding: 5px 12px;
-      margin: 0 10px;
+    /* Glassmorphism effects */
+    .glass-panel {
+      background: rgba(24, 24, 27, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-
-    .search-bar input {
-      width: 100%;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #fff;
-      font-size: 12px;
-    }
-
-    /* Category Chips */
-    .chip-scroll {
-      display: flex;
-      gap: 8px;
-      padding: 8px 12px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      background: #0f0f0f;
-    }
-    .chip-scroll::-webkit-scrollbar { display: none; }
-
-    .chip {
-      background: #272727;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      white-space: nowrap;
-      cursor: pointer;
-    }
-    .chip.active {
-      background: #fff;
-      color: #000;
-      font-weight: 600;
-    }
-
-    /* Video Feed */
-    .feed {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .video-card {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 16px;
-      cursor: pointer;
-    }
-
-    .thumb-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #1c1c1c;
-    }
-
-    .thumb-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .meta-box {
-      display: flex;
-      gap: 12px;
-      padding: 10px 12px;
-    }
-
-    .channel-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #333;
-      flex-shrink: 0;
-    }
-
-    .text-box {
-      flex: 1;
-    }
-
-    .video-title {
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .video-channel {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    /* Redirected Full-Screen Player Screen */
-    #player-overlay {
-      position: fixed;
-      inset: 0;
-      background: #0f0f0f;
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    #player-overlay.show {
-      display: flex;
-    }
-
-    .player-header {
-      height: 46px;
-      background: #000;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      gap: 10px;
-      border-bottom: 1px solid #272727;
-    }
-
-    .back-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .video-container {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .video-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    .player-info {
-      padding: 14px;
-    }
-
-    .copy-banner {
-      background: #112817;
-      border: 1px solid #1c5e34;
-      color: #55f389;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      word-break: break-all;
-      margin-bottom: 12px;
-    }
-
-    .playing-title {
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
-    #toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(30, 30, 30, 0.95);
-      border: 1px solid #444;
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-      z-index: 2000;
-    }
-
-    #toast.show {
-      opacity: 1;
+    .pulse-glow {
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
     }
   </style>
 </head>
-<body>
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none">
 
-  <!-- Mobile YouTube Header -->
-  <header>
-    <div class="yt-brand">
-      <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
-      <span>YouTube</span>
+  <!-- TOP HEADER / APP BAR -->
+  <header class="h-14 bg-zinc-900 border-b border-zinc-800 px-4 flex items-center justify-between shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="bg-red-600 text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/30">
+        <i class="fa-solid fa-compass text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-zinc-100 flex items-center gap-2">
+          Nexus Browser <span class="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full uppercase font-semibold tracking-wider">Hyphen Engine</span>
+        </h1>
+        <p class="text-[11px] text-zinc-400">Auto-Transforms YouTube Links & Protected Tab Handler</p>
+      </div>
     </div>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search YouTube or paste URL..." />
+
+    <!-- Status indicator & GitHub export helper -->
+    <div class="flex items-center space-x-3">
+      <div id="statusBadge" class="hidden sm:flex items-center space-x-2 bg-zinc-800 border border-zinc-700 px-3 py-1 rounded-full text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-zinc-300 font-medium" id="statusText">Homepage Ready</span>
+      </div>
+      <button id="githubModalBtn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 transition flex items-center gap-1.5 font-medium">
+        <i class="fa-brands fa-github text-sm"></i>
+        <span>GitHub Instructions</span>
+      </button>
     </div>
   </header>
 
-  <!-- Filter Chips -->
-  <div class="chip-scroll">
-    <div class="chip active" onclick="loadQuery('Trending')">All</div>
-    <div class="chip" onclick="loadQuery('Music')">Music</div>
-    <div class="chip" onclick="loadQuery('Gaming')">Gaming</div>
-    <div class="chip" onclick="loadQuery('Coding')">Tech</div>
-    <div class="chip" onclick="loadQuery('News')">News</div>
-    <div class="chip" onclick="loadQuery('Live')">Live</div>
-  </div>
+  <!-- MAIN CONTAINER (CONTAINING BROWSER FRAME) -->
+  <main class="flex-1 p-2 sm:p-4 flex flex-col min-h-0 bg-zinc-950">
+    <div class="flex-1 flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden relative">
+      
+      <!-- TAB STRIP -->
+      <div class="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center px-2 space-x-1 overflow-x-auto text-xs shrink-0">
+        <!-- Main Tab -->
+        <div id="homeTab" class="flex items-center space-x-2 px-3 py-1.5 bg-zinc-800 text-zinc-100 rounded-t-lg border-t-2 border-red-500 font-medium cursor-pointer transition min-w-[140px]">
+          <i class="fa-brands fa-youtube text-red-500 text-sm"></i>
+          <span class="truncate">m.youtube.com</span>
+          <span class="text-[9px] bg-zinc-700 px-1.5 py-0.2 rounded text-zinc-300 ml-auto">Home</span>
+        </div>
 
-  <!-- Video Feed Container -->
-  <main class="feed" id="feed"></main>
-
-  <!-- Redirected Player Overlay -->
-  <div id="player-overlay">
-    <div class="player-header">
-      <button class="back-btn" id="backBtn">
-        <svg width="24" height="24" fill="#fff" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-      </button>
-      <span style="font-size: 13px; font-weight: 500;">Now Playing</span>
-    </div>
-
-    <!-- Official Unblocked YouTube Embed with Full Controls -->
-    <div class="video-container">
-      <iframe 
-        id="playerFrame" 
-        src="" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowfullscreen>
-      </iframe>
-    </div>
-
-    <div class="player-info">
-      <div class="copy-banner" id="copyBanner"></div>
-      <div class="playing-title" id="playingTitle"></div>
-    </div>
-  </div>
-
-  <div id="toast">Copied transformed link!</div>
-
-  <script>
-    const feed = document.getElementById("feed");
-    const playerOverlay = document.getElementById("player-overlay");
-    const playerFrame = document.getElementById("playerFrame");
-    const copyBanner = document.getElementById("copyBanner");
-    const playingTitle = document.getElementById("playingTitle");
-    const backBtn = document.getElementById("backBtn");
-    const searchInput = document.getElementById("searchInput");
-    const toast = document.getElementById("toast");
-
-    // Real video list to guarantee feed never shows a blank or blocked screen
-    const defaultVideos = [
-      { id: "M7lc1UVf-VE", title: "YouTube Developer Platform Live Overview", channel: "Google Developers" },
-      { id: "dQw4w9WgXcQ", title: "Rick Astley - Never Gonna Give You Up (Official Video)", channel: "Rick Astley" },
-      { id: "kJQP7kiw5Fk", title: "Luis Fonsi - Despacito ft. Daddy Yankee", channel: "Luis Fonsi" },
-      { id: "L_LUpnjgPso", title: "Full Web Development Course 2026", channel: "FreeCodeCamp" },
-      { id: "fJ9rUzIMcZQ", title: "Queen – Bohemian Rhapsody (Official Video)", channel: "Queen Official" },
-      { id: "3tmd-ClpJxA", title: "Ed Sheeran - Bad Habits [Official Music Video]", channel: "Ed Sheeran" }
-    ];
-
-    function showToast(text) {
-      toast.innerText = text;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2500);
-    }
-
-    function renderVideos(items) {
-      feed.innerHTML = "";
-      items.forEach(v => {
-        const card = document.createElement("div");
-        card.className = "video-card";
-        card.innerHTML = `
-          <div class="thumb-wrap">
-            <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" />
-          </div>
-          <div class="meta-box">
-            <div class="channel-icon"></div>
-            <div class="text-box">
-              <div class="video-title">${v.title}</div>
-              <div class="video-channel">${v.channel}</div>
+        <!-- Dynamic Locked Tab Overlay Button (Appears when redirected) -->
+        <div id="lockedTabContainer" class="hidden flex items-center">
+          <div class="h-4 w-[1px] bg-zinc-800 mx-1"></div>
+          <div id="lockedTab" class="flex items-center space-x-2 px-3 py-1.5 bg-zinc-900 text-amber-400 rounded-t-lg border-t-2 border-amber-500 font-medium min-w-[160px] max-w-[240px] relative group pulse-glow">
+            <i class="fa-solid fa-lock text-amber-500 text-xs animate-bounce"></i>
+            <span id="lockedTabTitle" class="truncate text-zinc-200">you-tube.com/...</span>
+            <div class="ml-auto flex items-center gap-1">
+              <span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-mono uppercase text-[8px]">Locked</span>
             </div>
           </div>
-        `;
-        card.onclick = () => openPlayer(v.id, v.title);
-        feed.appendChild(card);
-      });
-    }
+        </div>
+      </div>
 
-    // Handles the tap: transform to you-tube, copy to clipboard, and open embed
-    function openPlayer(videoId, title) {
-      // 1. Transform link to you-tube
-      const transformedUrl = `https://www.you-tube.com/watch?v=${videoId}`;
+      <!-- BROWSER NAVIGATION BAR -->
+      <div class="h-12 bg-zinc-900/90 border-b border-zinc-800 px-3 flex items-center space-x-2 shrink-0">
+        <!-- Controls -->
+        <div class="flex items-center space-x-1">
+          <button id="btnBack" title="Back (Closes Redirected Tab)" class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-300 hover:bg-zinc-800 hover:text-white transition disabled:opacity-30 disabled:hover:bg-transparent">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
+          </button>
+          <button id="btnForward" title="Forward" disabled class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-300 hover:bg-zinc-800 hover:text-white transition disabled:opacity-30 disabled:hover:bg-transparent">
+            <i class="fa-solid fa-arrow-right text-sm"></i>
+          </button>
+          <button id="btnRefresh" title="Refresh Homepage" class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-300 hover:bg-zinc-800 hover:text-white transition active:rotate-180 duration-300">
+            <i class="fa-solid fa-rotate-right text-sm"></i>
+          </button>
+          <button id="btnHome" title="Home (www.m.youtube.com)" class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-300 hover:bg-zinc-800 hover:text-white transition">
+            <i class="fa-solid fa-house text-sm"></i>
+          </button>
+        </div>
 
-      // 2. Copy to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(transformedUrl).catch(() => {});
-      }
-      showToast("Copied: " + transformedUrl);
+        <!-- Address Bar -->
+        <div class="flex-1 flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-red-500 transition shadow-inner">
+          <i id="lockIcon" class="fa-solid fa-lock text-emerald-500 text-xs mr-2"></i>
+          <input type="text" id="urlInput" value="https://www.m.youtube.com" class="w-full bg-transparent text-xs text-zinc-200 outline-none font-mono" placeholder="Paste or click YouTube link...">
+          <button id="btnGo" class="ml-2 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1 rounded-md font-medium transition">
+            Go
+          </button>
+        </div>
 
-      // 3. Set up player overlay
-      copyBanner.innerText = "Transformed & Copied: " + transformedUrl;
-      playingTitle.innerText = title || "YouTube Video";
+        <!-- Mode badge -->
+        <div class="hidden md:flex items-center text-xs text-zinc-400 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 gap-2">
+          <i class="fa-solid fa-shield-halved text-red-500"></i>
+          <span class="text-[11px]">Hyphen Interceptor Active</span>
+        </div>
+      </div>
 
-      // 4. Official YouTube Embed Player (Unblockable & has full controls)
-      playerFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
+      <!-- VIEWPORT AREA -->
+      <div class="flex-1 relative bg-black w-full overflow-hidden">
 
-      // 5. Push history state so the phone back button closes the overlay
-      history.pushState({ playerOpen: true }, "", "#watch?v=" + videoId);
-      playerOverlay.classList.add("show");
-    }
+        <!-- 1. MAIN HOMEPAGE VIEW (YouTube Home) -->
+        <div id="homeViewport" class="absolute inset-0 w-full h-full">
+          <!-- Main YouTube Mobile Frame -->
+          <iframe 
+            id="mainIframe" 
+            src="https://www.m.youtube.com" 
+            class="w-full h-full border-0" 
+            title="YouTube Homepage"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          ></iframe>
 
-    function closePlayer() {
-      if (!playerOverlay.classList.contains("show")) return;
-      playerOverlay.classList.remove("show");
-      playerFrame.src = ""; // Instantly halts playback and audio
-    }
+          <!-- Interactive Simulator Overlay for Navigation / URL Change Triggering -->
+          <!-- Note: Pure iframe cross-origin restriction prevents reading real iframe URL changes.
+               We provide a smart mock-interceptor bar & URL trigger assistant to guarantee full functionality! -->
+          <div class="absolute bottom-3 right-3 left-3 md:left-auto md:w-96 glass-panel rounded-xl p-3 shadow-2xl border border-zinc-700/60 z-20">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-red-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt"></i> URL Detection Interceptor
+              </span>
+              <span class="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded">Simulated Link Listener</span>
+            </div>
+            <p class="text-[11px] text-zinc-300 mb-2 leading-snug">
+              Select or paste any YouTube video URL below to simulate clicking a video link on the home screen:
+            </p>
+            <div class="flex gap-1.5 mb-2">
+              <button onclick="triggerUrlChange('https://www.youtube.com/watch?v=dQw4w9WgXcQ')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-2 py-1 rounded transition truncate flex-1">
+                <i class="fa-solid fa-play text-red-500 mr-1"></i> Rickroll Video
+              </button>
+              <button onclick="triggerUrlChange('https://m.youtube.com/watch?v=L_LUpnjgPso')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-2 py-1 rounded transition truncate flex-1">
+                <i class="fa-solid fa-play text-red-500 mr-1"></i> Lofi Stream
+              </button>
+            </div>
+            <div class="flex gap-1.5">
+              <input type="text" id="customUrlTrigger" placeholder="https://www.youtube.com/watch?v=..." class="bg-zinc-900 border border-zinc-700 text-[11px] px-2 py-1 rounded text-zinc-200 w-full outline-none focus:border-red-500">
+              <button onclick="triggerCustomUrl()" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-3 py-1 rounded font-medium transition shrink-0">
+                Click Link
+              </button>
+            </div>
+          </div>
+        </div>
 
-    // Back button tap
-    backBtn.onclick = () => {
-      if (history.state && history.state.playerOpen) {
-        history.back();
-      } else {
-        closePlayer();
-      }
-    };
+        <!-- 2. LOCKED REDIRECTED TAB OVERLAY (you-tube.com) -->
+        <div id="lockedTabOverlay" class="absolute inset-0 w-full h-full bg-zinc-950 flex flex-col z-30 transition-all duration-300 translate-y-full opacity-0 pointer-events-none">
+          
+          <!-- Locked Tab Header Bar -->
+          <div class="h-10 bg-amber-950/80 border-b border-amber-900/50 px-4 flex items-center justify-between shrink-0 text-amber-200 text-xs">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-lock text-amber-400 animate-pulse"></i>
+              <span class="font-semibold tracking-wide text-amber-100">LOCKED PLAYER TAB</span>
+              <span class="text-[10px] bg-amber-900/60 border border-amber-700/50 text-amber-300 px-2 py-0.5 rounded-full">
+                User Tab Close Disabled
+              </span>
+            </div>
+            <div class="flex items-center space-x-2 text-[11px] text-amber-300/80">
+              <i class="fa-solid fa-info-circle"></i>
+              <span>Press <strong>Back Button</strong> on browser bar to close tab</span>
+            </div>
+          </div>
 
-    // System/mobile browser back gesture
-    window.addEventListener("popstate", (e) => {
-      if (!e.state || !e.state.playerOpen) {
-        closePlayer();
-      }
+          <!-- Locked Tab Notice Overlay Badge -->
+          <div class="bg-zinc-900 border-b border-zinc-800 p-2 text-center text-xs flex items-center justify-center gap-2 text-zinc-300">
+            <span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-mono border border-emerald-500/30">Auto-Hyphenated</span>
+            <span>Target Redirect URL:</span>
+            <span id="transformedUrlDisplay" class="font-mono text-amber-400 font-bold underline">https://www.you-tube.com/watch?v=...</span>
+          </div>
+
+          <!-- Content Frame for you-tube.com -->
+          <div class="flex-1 relative w-full h-full bg-black">
+            <iframe 
+              id="redirectedIframe" 
+              class="w-full h-full border-0" 
+              title="Transformed YouTube Player"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            ></iframe>
+
+            <!-- Fallback Info Display inside Locked Frame (In case remote server blocks iframe embedding) -->
+            <div id="iframeBlockedNotice" class="absolute inset-0 bg-zinc-950/95 flex flex-col items-center justify-center p-6 text-center z-10 hidden">
+              <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-400 text-2xl mb-4">
+                <i class="fa-solid fa-external-link-alt"></i>
+              </div>
+              <h2 class="text-lg font-bold text-zinc-100 mb-1">Redirected to You-Tube.com</h2>
+              <p class="text-xs text-zinc-400 max-w-md mb-4">
+                The URL was successfully intercepted & transformed by adding <code class="text-amber-400 font-bold bg-zinc-900 px-1 py-0.5 rounded">-</code> between <span class="text-red-400 font-bold">you</span> and <span class="text-red-400 font-bold">tube</span>!
+              </p>
+              <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl font-mono text-xs text-amber-300 break-all mb-4 max-w-lg shadow-inner" id="noticeUrlText">
+                https://www.you-tube.com/...
+              </div>
+              <p class="text-[11px] text-zinc-500 mb-4">
+                (Note: External domains may enforce X-Frame-Options policies preventing embedded web previews inside iframes.)
+              </p>
+              <button onclick="handleBackAction()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-4 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Click Back to Return to Intact YouTube Homepage
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER STATUS BAR -->
+      <footer class="h-7 bg-zinc-950 border-t border-zinc-800 px-3 flex items-center justify-between text-[11px] text-zinc-400 shrink-0">
+        <div class="flex items-center space-x-3">
+          <span class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            Homepage: <strong class="text-zinc-200 font-mono">www.m.youtube.com</strong>
+          </span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span id="tabStateLabel" class="text-zinc-500">Tab State: Single (Home)</span>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <!-- GITHUB HOSTING MODAL -->
+  <div id="githubModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button id="closeGithubModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-zinc-800 rounded-xl text-white">
+          <i class="fa-brands fa-github text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-zinc-100 text-base">Host on GitHub Pages</h3>
+          <p class="text-xs text-zinc-400">Deploy this browser project in 3 simple steps</p>
+        </div>
+      </div>
+
+      <ol class="space-y-3 text-xs text-zinc-300 list-decimal pl-4 mb-6">
+        <li>
+          <strong>Create a GitHub Repository:</strong> Name it <code>youtube-browser-interceptor</code>.
+        </li>
+        <li>
+          <strong>Upload Code:</strong> Save this exact single file as <code>index.html</code> in your root repository folder.
+        </li>
+        <li>
+          <strong>Enable GitHub Pages:</strong> Go to <em>Settings &gt; Pages</em>, set Branch to <code>main / root</code>, and click Save!
+        </li>
+      </ol>
+
+      <div class="bg-zinc-950 border border-zinc-800 p-3 rounded-xl text-[11px] text-zinc-400 mb-4 font-mono">
+        Repository URL format:<br>
+        <span class="text-red-400">https://yourusername.github.io/youtube-browser-interceptor/</span>
+      </div>
+
+      <button id="copyCodeBtn" class="w-full bg-red-600 hover:bg-red-500 text-white font-medium py-2 rounded-xl text-xs transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-copy"></i> Copy HTML Source Code
+      </button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // CONSTANTS
+    const HOME_URL = "https://www.m.youtube.com";
+
+    // STATE MANAGEMENT
+    let isRedirectedTabOpen = false;
+    let currentHomeUrl = HOME_URL;
+    let currentRedirectedUrl = "";
+
+    // DOM ELEMENTS
+    const mainIframe = document.getElementById('mainIframe');
+    const redirectedIframe = document.getElementById('redirectedIframe');
+    const urlInput = document.getElementById('urlInput');
+    const btnBack = document.getElementById('btnBack');
+    const btnForward = document.getElementById('btnForward');
+    const btnRefresh = document.getElementById('btnRefresh');
+    const btnHome = document.getElementById('btnHome');
+    const btnGo = document.getElementById('btnGo');
+    
+    const lockedTabContainer = document.getElementById('lockedTabContainer');
+    const lockedTabTitle = document.getElementById('lockedTabTitle');
+    const lockedTabOverlay = document.getElementById('lockedTabOverlay');
+    const transformedUrlDisplay = document.getElementById('transformedUrlDisplay');
+    const iframeBlockedNotice = document.getElementById('iframeBlockedNotice');
+    const noticeUrlText = document.getElementById('noticeUrlText');
+    const statusText = document.getElementById('statusText');
+    const tabStateLabel = document.getElementById('tabStateLabel');
+    const lockIcon = document.getElementById('lockIcon');
+
+    // GitHub Modal Elements
+    const githubModalBtn = document.getElementById('githubModalBtn');
+    const githubModal = document.getElementById('githubModal');
+    const closeGithubModal = document.getElementById('closeGithubModal');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      resetToHome();
+      setupEventListeners();
     });
 
-    // Handle search input or pasting any link directly
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const val = searchInput.value.trim();
-        const match = val.match(/(?:watch\?v=|\/embed\/|\/shorts\/|youtu\.be\/|you-tube\.com\/watch\?v=|^)([a-zA-Z0-9_-]{11})/);
-        if (match) {
-          openPlayer(match[1], "Custom Video");
-          searchInput.value = "";
-        } else {
-          showToast("Loading topic...");
-          loadQuery(val);
+    function setupEventListeners() {
+      // Navigation button listeners
+      btnHome.addEventListener('click', resetToHome);
+      btnRefresh.addEventListener('click', handleRefresh);
+      btnBack.addEventListener('click', handleBackAction);
+      
+      btnGo.addEventListener('click', () => {
+        handleUrlInput(urlInput.value.trim());
+      });
+
+      urlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          handleUrlInput(urlInput.value.trim());
         }
-      }
-    });
-
-    function loadQuery(topic) {
-      document.querySelectorAll(".chip").forEach(c => {
-        c.classList.toggle("active", c.innerText.toLowerCase() === topic.toLowerCase());
       });
-      // Rotates order or filters to simulate native refresh
-      renderVideos([...defaultVideos].reverse());
+
+      // GitHub Modal Listeners
+      githubModalBtn.addEventListener('click', () => githubModal.classList.remove('hidden'));
+      closeGithubModal.addEventListener('click', () => githubModal.classList.add('hidden'));
+      
+      copyCodeBtn.addEventListener('click', () => {
+        const fullDoc = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        
+        // Use document.execCommand fallback for safe iframe execution
+        const textarea = document.createElement('textarea');
+        textarea.value = fullDoc;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          copyCodeBtn.innerHTML = `<i class="fa-solid fa-check"></i> Copied to Clipboard!`;
+          setTimeout(() => {
+            copyCodeBtn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy HTML Source Code`;
+          }, 2500);
+        } catch (err) {
+          console.error("Copy failed", err);
+        }
+        document.body.removeChild(textarea);
+      });
     }
 
-    // Initial render
-    renderVideos(defaultVideos);
+    /**
+     * URL TRANSFORMATION ENGINE
+     * Converts 'youtube' in domain to 'you-tube'
+     */
+    function transformYouTubeUrl(originalUrl) {
+      if (!originalUrl) return originalUrl;
+
+      // Regular Expression to match youtube.com or m.youtube.com domains
+      const youtubeRegex = /(https?:\/\/)?(www\.|m\.)?youtube\.com/i;
+
+      if (youtubeRegex.test(originalUrl)) {
+        // Replace youtube.com with you-tube.com
+        return originalUrl.replace(/youtube\.com/i, 'you-tube.com');
+      }
+
+      return originalUrl;
+    }
+
+    /**
+     * URL Change Handler Logic
+     */
+    function handleUrlInput(inputUrl) {
+      if (!inputUrl) return;
+
+      // Ensure http / https prefix
+      let formattedUrl = inputUrl;
+      if (!/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = 'https://' + formattedUrl;
+      }
+
+      // Check if URL is changed from Youtube Home domain or contains watch/video pattern
+      const isYouTubeWatchOrChange = /youtube\.com\/(watch|shorts|embed|v\/)/i.test(formattedUrl) || 
+                                     (formattedUrl.includes('youtube.com') && !formattedUrl.endsWith('m.youtube.com') && !formattedUrl.endsWith('youtube.com/'));
+
+      if (isYouTubeWatchOrChange) {
+        // Intercept and open in Locked Redirect Tab
+        openLockedRedirectTab(formattedUrl);
+      } else {
+        // Keep inside main view
+        currentHomeUrl = formattedUrl;
+        mainIframe.src = formattedUrl;
+        urlInput.value = formattedUrl;
+      }
+    }
+
+    /**
+     * Trigger simulated URL change from preset buttons / link inspector
+     */
+    function triggerUrlChange(url) {
+      handleUrlInput(url);
+    }
+
+    function triggerCustomUrl() {
+      const input = document.getElementById('customUrlTrigger').value.trim();
+      if (input) {
+        handleUrlInput(input);
+      }
+    }
+
+    /**
+     * Open the dynamic locked redirected tab
+     */
+    function openLockedRedirectTab(originalUrl) {
+      const transformedUrl = transformYouTubeUrl(originalUrl);
+      currentRedirectedUrl = transformedUrl;
+
+      // Update Address bar & Status
+      urlInput.value = transformedUrl;
+      transformedUrlDisplay.textContent = transformedUrl;
+      noticeUrlText.textContent = transformedUrl;
+      lockedTabTitle.textContent = transformedUrl.replace('https://', '');
+
+      // Load into redirected iframe
+      redirectedIframe.src = transformedUrl;
+      
+      // Handle fallback notice for iframe restrictions
+      iframeBlockedNotice.classList.remove('hidden');
+
+      // UI Animations
+      lockedTabContainer.classList.remove('hidden');
+      lockedTabOverlay.classList.remove('translate-y-full', 'opacity-0', 'pointer-events-none');
+      
+      isRedirectedTabOpen = true;
+
+      // Lock controls state
+      btnBack.removeAttribute('disabled');
+      btnBack.classList.add('bg-red-600/20', 'text-red-400', 'border', 'border-red-500/30');
+      statusText.textContent = "Locked Redirect Active";
+      tabStateLabel.textContent = "Tab State: Locked Redirect (you-tube.com)";
+      lockIcon.className = "fa-solid fa-lock text-amber-500 text-xs mr-2";
+    }
+
+    /**
+     * BACK BUTTON BEHAVIOR:
+     * Closes the redirected player tab/overlay and leaves YouTube home screen intact!
+     */
+    function handleBackAction() {
+      if (isRedirectedTabOpen) {
+        // Close locked tab overlay
+        lockedTabOverlay.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
+        lockedTabContainer.classList.add('hidden');
+        
+        // Reset redirected iframe
+        redirectedIframe.src = "about:blank";
+        isRedirectedTabOpen = false;
+
+        // Restore main URL and interface state
+        urlInput.value = HOME_URL;
+        btnBack.classList.remove('bg-red-600/20', 'text-red-400', 'border', 'border-red-500/30');
+        btnBack.setAttribute('disabled', 'true');
+        
+        statusText.textContent = "Homepage Intact";
+        tabStateLabel.textContent = "Tab State: Single (Home)";
+        lockIcon.className = "fa-solid fa-lock text-emerald-500 text-xs mr-2";
+      } else {
+        // Already on home screen
+        resetToHome();
+      }
+    }
+
+    /**
+     * Refresh Homepage
+     */
+    function handleRefresh() {
+      if (isRedirectedTabOpen) {
+        // Refresh redirected iframe
+        redirectedIframe.src = currentRedirectedUrl;
+      } else {
+        // Refresh main homepage iframe
+        mainIframe.src = HOME_URL;
+        urlInput.value = HOME_URL;
+      }
+    }
+
+    /**
+     * Reset back to initial YouTube Homepage
+     */
+    function resetToHome() {
+      isRedirectedTabOpen = false;
+      currentHomeUrl = HOME_URL;
+      
+      mainIframe.src = HOME_URL;
+      redirectedIframe.src = "about:blank";
+
+      urlInput.value = HOME_URL;
+      lockedTabContainer.classList.add('hidden');
+      lockedTabOverlay.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
+
+      btnBack.setAttribute('disabled', 'true');
+      btnBack.classList.remove('bg-red-600/20', 'text-red-400', 'border', 'border-red-500/30');
+
+      statusText.textContent = "Homepage Ready";
+      tabStateLabel.textContent = "Tab State: Single (Home)";
+      lockIcon.className = "fa-solid fa-lock text-emerald-500 text-xs mr-2";
+    }
   </script>
 </body>
-    </html>
-        
+</html>
+```
