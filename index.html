@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YouTube</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:#0f0f0f; color:#fff; overflow-x:hidden; }
+
+    /* Top YouTube Bar */
+    header {
+      position:sticky; top:0; z-index:100; height:48px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 14px; background:#0f0f0f; border-bottom:1px solid #272727;
+    }
+    .logo { display:flex; align-items:center; gap:5px; font-weight:700; font-size:18px; }
+    .logo svg { width:26px; height:20px; fill:#ff0000; }
+
+    /* URL input bar */
+    .search-box {
+      display:flex; align-items:center; background:#1e1e1e;
+      border:1px solid #333; border-radius:18px; padding:4px 10px; flex:1; margin:0 12px;
+    }
+    .search-box input { background:transparent; border:none; outline:none; color:#fff; width:100%; font-size:12px; }
+
+    /* Video feed */
+    .feed { padding-bottom:60px; }
+    .video-card { margin-bottom:16px; cursor:pointer; }
+    .thumb { position:relative; width:100%; aspect-ratio:16/9; background:#222; }
+    .thumb img { width:100%; height:100%; object-fit:cover; }
+    .duration { position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.8); font-size:11px; padding:2px 5px; border-radius:4px; }
+    .meta { display:flex; gap:10px; padding:10px 12px; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:#333; }
+    .info { flex:1; }
+    .title { font-size:14px; font-weight:500; line-height:1.3; }
+    .sub { font-size:12px; color:#aaa; margin-top:3px; }
+
+    /* Player Overlay Screen */
+    #player-screen {
+      position:fixed; inset:0; background:#0f0f0f; z-index:999;
+      display:none; flex-direction:column;
+    }
+    #player-screen.active { display:flex; }
+
+    .player-nav {
+      height:44px; display:flex; align-items:center; padding:0 12px;
+      gap:12px; background:#000; border-bottom:1px solid #272727;
+    }
+    .back-btn { background:transparent; border:none; color:#fff; display:flex; align-items:center; cursor:pointer; }
+    
+    .video-frame { width:100%; aspect-ratio:16/9; background:#000; }
+    .video-frame iframe { width:100%; height:100%; border:none; }
+
+    .player-details { padding:14px; }
+    .copied-box { background:#132616; border:1px solid #23522a; color:#5ee679; padding:8px 12px; border-radius:8px; font-size:11px; word-break:break-all; margin-bottom:10px; }
+
+    #toast {
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      background:rgba(40,40,40,0.95); border:1px solid #444; color:#fff;
+      padding:8px 16px; border-radius:20px; font-size:12px; opacity:0;
+      transition:opacity 0.2s; pointer-events:none; z-index:1100;
+    }
+    #toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+
+  <!-- Main Feed Header -->
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+      <span>YouTube</span>
+    </div>
+    <div class="search-box">
+      <input type="text" id="manualInput" placeholder="Paste link or video ID..." />
+    </div>
+  </header>
+
+  <!-- Feed Cards -->
+  <div class="feed" id="feed"></div>
+
+  <!-- Player Screen (Opens when video is tapped) -->
+  <div id="player-screen">
+    <div class="player-nav">
+      <button class="back-btn" id="closeBtn">
+        <svg width="24" height="24" fill="#fff" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+      </button>
+      <span style="font-size:13px; font-weight:500;">Playing Video</span>
+    </div>
+
+    <!-- YouTube Embed Player with all controls -->
+    <div class="video-frame">
+      <iframe id="iframePlayer" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <div class="player-details">
+      <div class="copied-box" id="copyAlert"></div>
+      <h3 id="playTitle" style="font-size:15px; font-weight:600;"></h3>
+    </div>
+  </div>
+
+  <div id="toast">Copied transformed link!</div>
+
+  <script>
+    const videos = [
+      { id: "dQw4w9WgXcQ", title: "Rick Astley - Never Gonna Give You Up", channel: "Rick Astley", views: "1.5B views", time: "3:33" },
+      { id: "M7lc1UVf-VE", title: "YouTube Embedded Player API Demonstration", channel: "Developers", views: "2.1M views", time: "14:20" },
+      { id: "L_LUpnjgPso", title: "Modern Web Development Full Course", channel: "Code World", views: "850K views", time: "10:15" },
+      { id: "kJQP7kiw5Fk", title: "Luis Fonsi - Despacito ft. Daddy Yankee", channel: "Luis Fonsi", views: "8.3B views", time: "4:41" }
+    ];
+
+    const feed = document.getElementById("feed");
+    const playerScreen = document.getElementById("player-screen");
+    const iframePlayer = document.getElementById("iframePlayer");
+    const copyAlert = document.getElementById("copyAlert");
+    const playTitle = document.getElementById("playTitle");
+    const closeBtn = document.getElementById("closeBtn");
+    const toast = document.getElementById("toast");
+    const manualInput = document.getElementById("manualInput");
+
+    // Populate feed
+    videos.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "video-card";
+      card.innerHTML = `
+        <div class="thumb">
+          <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" />
+          <span class="duration">${v.time}</span>
+        </div>
+        <div class="meta">
+          <div class="avatar"></div>
+          <div class="info">
+            <div class="title">${v.title}</div>
+            <div class="sub">${v.channel} • ${v.views}</div>
+          </div>
+        </div>
+      `;
+      card.onclick = () => openVideo(v.id, v.title);
+      feed.appendChild(card);
+    });
+
+    function showToast(text) {
+      toast.innerText = text;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function openVideo(id, title = "YouTube Video") {
+      // 1. Transform link to you-tube
+      const transformedUrl = `https://www.you-tube.com/watch?v=${id}`;
+
+      // 2. Copy to clipboard
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(transformedUrl).catch(() => {});
+      }
+      showToast("Copied: " + transformedUrl);
+
+      // 3. Load embed with full controls
+      copyAlert.innerText = "Transformed & Copied: " + transformedUrl;
+      playTitle.innerText = title;
+      iframePlayer.src = `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0`;
+
+      // 4. Open player and push history so mobile back button works
+      history.pushState({ player: true }, "", "#watch?v=" + id);
+      playerScreen.classList.add("active");
+    }
+
+    function closeVideo() {
+      playerScreen.classList.remove("active");
+      iframePlayer.src = ""; // Stop video immediately
+    }
+
+    // Back button taps
+    closeBtn.onclick = () => {
+      if (history.state && history.state.player) {
+        history.back();
+      } else {
+        closeVideo();
+      }
+    };
+
+    // System back gesture / button on phone
+    window.addEventListener("popstate", (e) => {
+      if (!e.state || !e.state.player) {
+        closeVideo();
+      }
+    });
+
+    // Manual Paste bar support
+    manualInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const val = manualInput.value.trim();
+        const match = val.match(/(?:v=|\/embed\/|youtu\.be\/|^)([a-zA-Z0-9_-]{11})/);
+        if (match) {
+          openVideo(match[1], "Custom Video");
+          manualInput.value = "";
+        }
+      }
+    });
+  </script>
+</body>
+  </html>
+  
