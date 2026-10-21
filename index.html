@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Document Scanner (Offline PNG)</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; text-align: center; }
+        #viewfinder { width: 100%; max-width: 600px; height: auto; border-radius: 8px; background: #000; }
+        .btn { background: #007bff; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; margin-top: 15px; }
+        .btn:active { background: #0056b3; }
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <h2>Office Scanner (PNG Output)</h2>
+    <div>
+        <video id="viewfinder" autoplay playsinline></video>
+    </div>
+    <div>
+        <button class="btn" id="capture-btn">Capture Document</button>
+    </div>
+    <canvas id="processing-canvas"></canvas>
+
+    <script src="opencv.js" async></script>
+    <script src="app.js"></script>
+</body>
+</html>
