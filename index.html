@@ -2,361 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Document Scanner</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline PDF Image Extractor</title>
+  
+  <!-- PDF.js Engine Loaded via CDN (Cached for Offline Use once loaded) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  
   <style>
-    body {
-      background-color: #0B141A;
-      color: #E9EDEF;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      touch-action: none;
-      user-select: none;
-    }
-    .wa-bg { background-color: #111B21; }
-    .wa-green { color: #00A884; }
-    .wa-btn { background-color: #00A884; color: #111B21; }
-    .wa-btn:active { background-color: #008f70; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 20px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 800px; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    h2 { font-size: 1.5rem; margin-bottom: 8px; color: #1a1a1a; }
+    p.subtitle { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+    
+    .file-input-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    input[type="file"] { padding: 10px; border: 2px dashed #ccc; border-radius: 8px; background: #fafafa; cursor: pointer; }
+    button { padding: 12px 20px; background: #0066ff; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:disabled { background: #aac8ff; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #0052cc; }
+
+    #status { margin-bottom: 15px; font-weight: 500; font-size: 0.95rem; color: #444; }
+    
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+    .card { border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fff; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card img { max-width: 100%; max-height: 140px; object-fit: contain; border-radius: 4px; margin-bottom: 8px; }
+    .card-info { font-size: 0.75rem; color: #777; width: 100%; text-align: center; margin-bottom: 8px; }
+    .card a { width: 100%; text-align: center; background: #28a745; color: white; text-decoration: none; padding: 6px 0; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between overflow-hidden">
+<body>
 
-  <!-- Header Bar -->
-  <header class="wa-bg px-4 py-3 flex items-center justify-between border-b border-gray-800 z-20">
-    <div class="flex items-center gap-2">
-      <h1 class="font-bold text-lg text-white">Document Scanner</h1>
-    </div>
-    <span id="statusBadge" class="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 font-medium">Ready</span>
-  </header>
+<div class="container">
+  <h2>Offline PDF Image Extractor</h2>
+  <p class="subtitle">Extract original embedded images from your document without quality loss.</p>
 
-  <!-- Main Canvas Display -->
-  <main class="flex-1 relative flex items-center justify-center bg-black overflow-hidden p-2">
-    
-    <!-- Empty State / Splash Screen -->
-    <div id="splashState" class="flex flex-col items-center justify-center text-center p-6 gap-4">
-      <div class="w-20 h-20 rounded-full bg-gray-900 flex items-center justify-center border border-gray-800">
-        <svg class="w-10 h-10 text-[#00A884]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h0.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-      </div>
-      <div>
-        <h2 class="text-base font-semibold text-white">No Document Captured</h2>
-        <p class="text-xs text-gray-400 mt-1">Tap the button below to open your camera and scan pages.</p>
-      </div>
-    </div>
+  <div class="file-input-wrapper">
+    <input type="file" id="pdf-file" accept="application/pdf">
+    <button id="extract-btn" onclick="startExtraction()">Extract Images</button>
+  </div>
 
-    <!-- Interactive Canvas Workspace -->
-    <div id="workspace" class="hidden relative max-w-full max-h-full flex items-center justify-center">
-      <canvas id="displayCanvas" class="max-w-full max-h-[75vh] object-contain shadow-2xl rounded border border-gray-800"></canvas>
-    </div>
+  <div id="status">Select a PDF file to begin...</div>
+  <div class="gallery" id="gallery"></div>
+</div>
 
-  </main>
+<script>
+  // Setup PDF.js worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-  <!-- Controls Footer -->
-  <footer class="wa-bg p-4 border-t border-gray-800 z-20 flex flex-col gap-3">
-    
-    <!-- Native Camera Capture Input -->
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+  let imageCount = 0;
 
-    <!-- Mode 1: Initial Capture Controls -->
-    <div id="captureControls" class="flex flex-col gap-2 w-full max-w-md mx-auto">
-      <button onclick="document.getElementById('cameraInput').click()" class="w-full py-3.5 wa-btn font-bold rounded-full flex items-center justify-center gap-2 text-base shadow-lg">
-        📷 Take Photo / Snap Document
-      </button>
-    </div>
+  async function startExtraction() {
+    const fileInput = document.getElementById('pdf-file');
+    const status = document.getElementById('status');
+    const gallery = document.getElementById('gallery');
+    const extractBtn = document.getElementById('extract-btn');
 
-    <!-- Mode 2: Interactive Crop & Warp Controls -->
-    <div id="cropControls" class="hidden flex justify-between items-center w-full max-w-md mx-auto gap-3">
-      <button id="retakeBtn" class="flex-1 py-3 bg-gray-800 text-white font-semibold rounded-full text-sm">
-        Retake
-      </button>
-      <button id="applyCropBtn" class="flex-1 py-3 wa-btn font-bold rounded-full text-sm">
-        Straighten & Filter ➔
-      </button>
-    </div>
-
-    <!-- Mode 3: Save & Export Controls -->
-    <div id="exportControls" class="hidden flex flex-col gap-2 w-full max-w-md mx-auto">
-      <div class="flex gap-2">
-        <button id="filterBw" class="flex-1 py-2 bg-[#00A884] text-black font-bold rounded-lg text-xs">B&W Document</button>
-        <button id="filterGray" class="flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs">Grayscale</button>
-        <button id="filterColor" class="flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs">Original Color</button>
-      </div>
-      <div class="flex gap-2 mt-1">
-        <button id="backToCropBtn" class="flex-1 py-3 bg-gray-800 text-white font-semibold rounded-full text-sm">
-          Adjust Crop
-        </button>
-        <button id="savePngBtn" class="flex-1 py-3 wa-btn font-bold rounded-full text-sm">
-          ⬇ Save High-Res PNG
-        </button>
-      </div>
-    </div>
-
-  </footer>
-
-  <script>
-    const cameraInput = document.getElementById('cameraInput');
-    const splashState = document.getElementById('splashState');
-    const workspace = document.getElementById('workspace');
-    const displayCanvas = document.getElementById('displayCanvas');
-    const ctx = displayCanvas.getContext('2d');
-    const statusBadge = document.getElementById('statusBadge');
-
-    const captureControls = document.getElementById('captureControls');
-    const cropControls = document.getElementById('cropControls');
-    const exportControls = document.getElementById('exportControls');
-
-    const retakeBtn = document.getElementById('retakeBtn');
-    const applyCropBtn = document.getElementById('applyCropBtn');
-    const backToCropBtn = document.getElementById('backToCropBtn');
-    const savePngBtn = document.getElementById('savePngBtn');
-
-    const filterBw = document.getElementById('filterBw');
-    const filterGray = document.getElementById('filterGray');
-    const filterColor = document.getElementById('filterColor');
-
-    let loadedImage = null;
-    let originalImageCanvas = document.createElement('canvas');
-    let originalCtx = originalImageCanvas.getContext('2d');
-    let warpedCanvas = document.createElement('canvas');
-    let warpedCtx = warpedCanvas.getContext('2d');
-
-    // 4 Corner Drag Handles [{x, y}] normalized from 0.0 to 1.0
-    let corners = [
-      { x: 0.05, y: 0.05 }, // Top-Left
-      { x: 0.95, y: 0.05 }, // Top-Right
-      { x: 0.95, y: 0.95 }, // Bottom-Right
-      { x: 0.05, y: 0.95 }  // Bottom-Left
-    ];
-    let activeCornerIdx = -1;
-    let activeFilter = 'BW';
-
-    // Handle Camera Image Capture
-    cameraInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      statusBadge.innerText = "Loading Photo...";
-      const img = new Image();
-      img.onload = () => {
-        loadedImage = img;
-
-        // Store uncompressed raw photo on offscreen canvas
-        originalImageCanvas.width = img.width;
-        originalImageCanvas.height = img.height;
-        originalCtx.drawImage(img, 0, 0);
-
-        // Reset default corners
-        corners = [
-          { x: 0.05, y: 0.05 },
-          { x: 0.95, y: 0.05 },
-          { x: 0.95, y: 0.95 },
-          { x: 0.05, y: 0.95 }
-        ];
-
-        splashState.classList.add('hidden');
-        workspace.classList.remove('hidden');
-        captureControls.classList.add('hidden');
-        cropControls.classList.remove('hidden');
-        exportControls.classList.add('hidden');
-
-        statusBadge.innerText = "Adjust Corners";
-        renderCropOverlay();
-      };
-      img.src = URL.createObjectURL(file);
-    });
-
-    // Render Image with Interactive 4-Corner Crop Polygon
-    function renderCropOverlay() {
-      displayCanvas.width = loadedImage.width;
-      displayCanvas.height = loadedImage.height;
-
-      // Draw Base Photo
-      ctx.drawImage(loadedImage, 0, 0);
-
-      const w = displayCanvas.width;
-      const h = displayCanvas.height;
-
-      // Draw Semi-Transparent Dark Mask outside selection
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(0, 0, w, h);
-
-      // Clip and redraw clear photo inside polygon
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(corners[0].x * w, corners[0].y * h);
-      ctx.lineTo(corners[1].x * w, corners[1].y * h);
-      ctx.lineTo(corners[2].x * w, corners[2].y * h);
-      ctx.lineTo(corners[3].x * w, corners[3].y * h);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(loadedImage, 0, 0);
-      ctx.restore();
-
-      // Draw Green Boundary Lines
-      ctx.beginPath();
-      ctx.moveTo(corners[0].x * w, corners[0].y * h);
-      ctx.lineTo(corners[1].x * w, corners[1].y * h);
-      ctx.lineTo(corners[2].x * w, corners[2].y * h);
-      ctx.lineTo(corners[3].x * w, corners[3].y * h);
-      ctx.closePath();
-      ctx.strokeStyle = "#00A884";
-      ctx.lineWidth = Math.max(4, Math.round(w / 150));
-      ctx.stroke();
-
-      // Draw Corner Handles
-      const handleRadius = Math.max(12, Math.round(w / 60));
-      corners.forEach((c, idx) => {
-        ctx.beginPath();
-        ctx.arc(c.x * w, c.y * h, handleRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = "#00A884";
-        ctx.fill();
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = Math.max(2, Math.round(w / 300));
-        ctx.stroke();
-      });
+    if (!fileInput.files.length) {
+      alert("Please select a PDF file first!");
+      return;
     }
 
-    // Pointer Interaction Handling for Dragging Corners
-    function getCanvasCoords(e) {
-      const rect = displayCanvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: (clientX - rect.left) / rect.width,
-        y: (clientY - rect.top) / rect.height
-      };
-    }
+    // Reset UI
+    gallery.innerHTML = '';
+    imageCount = 0;
+    extractBtn.disabled = true;
+    status.innerText = "Parsing PDF structure...";
 
-    displayCanvas.addEventListener('pointerdown', (e) => {
-      const pos = getCanvasCoords(e);
-      let minDist = 0.08; // Touch hit radius
-      activeCornerIdx = -1;
+    const file = fileInput.files[0];
+    const arrayBuffer = await file.arrayBuffer();
 
-      corners.forEach((c, idx) => {
-        const dist = Math.hypot(c.x - pos.x, c.y - pos.y);
-        if (dist < minDist) {
-          minDist = dist;
-          activeCornerIdx = idx;
-        }
-      });
-    });
+    try {
+      // Step 1: Parse Document
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      status.innerText = `Document loaded (${pdf.numPages} pages). Searching for image objects...`;
 
-    displayCanvas.addEventListener('pointermove', (e) => {
-      if (activeCornerIdx === -1) return;
-      const pos = getCanvasCoords(e);
-      corners[activeCornerIdx].x = Math.max(0, Math.min(1, pos.x));
-      corners[activeCornerIdx].y = Math.max(0, Math.min(1, pos.y));
-      renderCropOverlay();
-    });
+      // Step 2 & 3: Iterate through pages & Operator Lists
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        status.innerText = `Scanning Page ${pageNum} of ${pdf.numPages}...`;
+        const page = await pdf.getPage(pageNum);
+        const ops = await page.getOperatorList();
 
-    displayCanvas.addEventListener('pointerup', () => { activeCornerIdx = -1; });
-    displayCanvas.addEventListener('pointercancel', () => { activeCornerIdx = -1; });
-
-    // Perspective Crop Warp Execution
-    applyCropBtn.addEventListener('click', () => {
-      statusBadge.innerText = "Processing...";
-
-      const w = originalImageCanvas.width;
-      const h = originalImageCanvas.height;
-
-      // Output Target Dimensions
-      const targetW = Math.round(w * Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y));
-      const targetH = Math.round(h * Math.hypot(corners[3].y - corners[0].y, corners[3].x - corners[0].x));
-
-      warpedCanvas.width = targetW || w;
-      warpedCanvas.height = targetH || h;
-
-      // Draw cropped area
-      warpedCtx.drawImage(originalImageCanvas, 0, 0, warpedCanvas.width, warpedCanvas.height);
-
-      applyDocumentFilter();
-
-      cropControls.classList.add('hidden');
-      exportControls.classList.remove('hidden');
-      statusBadge.innerText = "Document Ready";
-    });
-
-    // High-Contrast Document Filters
-    function applyDocumentFilter() {
-      displayCanvas.width = warpedCanvas.width;
-      displayCanvas.height = warpedCanvas.height;
-      ctx.drawImage(warpedCanvas, 0, 0);
-
-      const imgData = ctx.getImageData(0, 0, displayCanvas.width, displayCanvas.height);
-      const data = imgData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        let avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-
-        if (activeFilter === 'BW') {
-          // Binarization: Crisp black text on bright white background
-          avg = avg > 128 ? 255 : Math.max(0, avg - 40);
-          data[i] = avg;
-          data[i + 1] = avg;
-          data[i + 2] = avg;
-        } else if (activeFilter === 'GRAY') {
-          data[i] = avg;
-          data[i + 1] = avg;
-          data[i + 2] = avg;
+        for (let i = 0; i < ops.fnArray.length; i++) {
+          // Look for paintImageXObject or paintInlineImageXObject operators
+          if (ops.fnArray[i] === pdfjsLib.OPS.paintImageXObject) {
+            const imgName = ops.argsArray[i][0];
+            
+            // Step 4: Resolve image stream from page object resources
+            page.objs.get(imgName, (imgData) => {
+              if (imgData) {
+                renderAndDisplayImage(imgData, pageNum);
+              }
+            });
+          }
         }
       }
 
-      ctx.putImageData(imgData, 0, 0);
+      setTimeout(() => {
+        if (imageCount === 0) {
+          status.innerText = "Completed scanning: No embedded images found.";
+        } else {
+          status.innerText = `Extraction Complete! Found ${imageCount} embedded image(s).`;
+        }
+        extractBtn.disabled = false;
+      }, 1000);
+
+    } catch (err) {
+      console.error(err);
+      status.innerText = "Error parsing PDF file.";
+      extractBtn.disabled = false;
+    }
+  }
+
+  // Step 5: Convert raw image buffer into native visual canvas -> PNG Data URL
+  function renderAndDisplayImage(imgData, pageNum) {
+    const width = imgData.width;
+    const height = imgData.height;
+
+    // Create an off-screen canvas at full native resolution
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Create image data buffer
+    const imgBuffer = ctx.createImageData(width, height);
+    
+    // Check color components (RGB / RGBA / Grayscale)
+    if (imgData.data.length === width * height * 4) {
+      imgBuffer.data.set(imgData.data);
+    } else if (imgData.data.length === width * height * 3) {
+      // Convert RGB to RGBA
+      let j = 0;
+      for (let i = 0; i < imgData.data.length; i += 3) {
+        imgBuffer.data[j]     = imgData.data[i];     // Red
+        imgBuffer.data[j + 1] = imgData.data[i + 1]; // Green
+        imgBuffer.data[j + 2] = imgData.data[i + 2]; // Blue
+        imgBuffer.data[j + 3] = 255;                // Alpha
+        j += 4;
+      }
+    } else if (imgData.data.length === width * height) {
+      // Convert Grayscale to RGBA
+      let j = 0;
+      for (let i = 0; i < imgData.data.length; i++) {
+        const val = imgData.data[i];
+        imgBuffer.data[j]     = val;
+        imgBuffer.data[j + 1] = val;
+        imgBuffer.data[j + 2] = val;
+        imgBuffer.data[j + 3] = 255;
+        j += 4;
+      }
     }
 
-    // Filter Buttons
-    filterBw.addEventListener('click', () => {
-      activeFilter = 'BW';
-      filterBw.className = "flex-1 py-2 bg-[#00A884] text-black font-bold rounded-lg text-xs";
-      filterGray.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      filterColor.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      applyDocumentFilter();
-    });
+    ctx.putImageData(imgBuffer, 0, 0);
 
-    filterGray.addEventListener('click', () => {
-      activeFilter = 'GRAY';
-      filterGray.className = "flex-1 py-2 bg-[#00A884] text-black font-bold rounded-lg text-xs";
-      filterBw.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      filterColor.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      applyDocumentFilter();
-    });
+    // Export image as PNG
+    const dataUrl = canvas.toDataURL('image/png');
+    imageCount++;
 
-    filterColor.addEventListener('click', () => {
-      activeFilter = 'COLOR';
-      filterColor.className = "flex-1 py-2 bg-[#00A884] text-black font-bold rounded-lg text-xs";
-      filterBw.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      filterGray.className = "flex-1 py-2 bg-gray-800 text-white font-bold rounded-lg text-xs";
-      applyDocumentFilter();
-    });
+    // Render image card to page
+    const gallery = document.getElementById('gallery');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${dataUrl}" alt="Extracted Image">
+      <div class="card-info">Page ${pageNum} • ${width}x${height}px</div>
+      <a href="${dataUrl}" download="extracted_img_p${pageNum}_${imageCount}.png">Download Original</a>
+    `;
+    gallery.appendChild(card);
+  }
+</script>
 
-    // Retake / Adjust Buttons
-    retakeBtn.addEventListener('click', () => {
-      cameraInput.value = "";
-      splashState.classList.remove('hidden');
-      workspace.classList.add('hidden');
-      captureControls.classList.remove('hidden');
-      cropControls.classList.add('hidden');
-      exportControls.classList.add('hidden');
-      statusBadge.innerText = "Ready";
-    });
-
-    backToCropBtn.addEventListener('click', () => {
-      exportControls.classList.add('hidden');
-      cropControls.classList.remove('hidden');
-      statusBadge.innerText = "Adjust Corners";
-      renderCropOverlay();
-    });
-
-    // Save PNG
-    savePngBtn.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = `office_scan_${Date.now()}.png`;
-      link.href = displayCanvas.toDataURL('image/png', 1.0);
-      link.click();
-    });
-  </script>
 </body>
-  </html>
-  
+</html>
