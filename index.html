@@ -1,382 +1,99 @@
-```html
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Office Document Scanner</title>
-    <!-- Tailwind CSS for WhatsApp-style Dark UI -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        wa: {
-                            bg: '#0B141A',
-                            surface: '#111B21',
-                            panel: '#202C33',
-                            green: '#00A884',
-                            greenDark: '#008069',
-                            greenLight: '#25D366',
-                            textPrimary: '#E9EDEF',
-                            textSecondary: '#8696A0',
-                            border: '#222D34'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
-            background-color: #0B141A;
-            color: #E9EDEF;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-        }
-
-        /* Interactive Corner Crop Handles */
-        .crop-handle {
-            position: absolute;
-            width: 28px;
-            height: 28px;
-            background: #00A884;
-            border: 3px solid #FFFFFF;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            cursor: move;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-            z-index: 40;
-            touch-action: none;
-            transition: scale 0.15s ease, background-color 0.15s ease;
-        }
-
-        .crop-handle:active, .crop-handle.active {
-            scale: 1.35;
-            background: #25D366;
-            box-shadow: 0 0 0 6px rgba(0, 168, 132, 0.35);
-        }
-
-        /* Loupe Magnifier for precise touch positioning */
-        #magnifier {
-            position: absolute;
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            border: 3px solid #00A884;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-            pointer-events: none;
-            display: none;
-            z-index: 50;
-            background-color: #000;
-            transform: translate(-50%, -120%);
-            overflow: hidden;
-        }
-
-        #magnifier-canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.2s ease-in-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Office Document Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between relative bg-wa-bg text-wa-textPrimary">
+<body class="bg-[#0B141A] text-white flex flex-col items-center justify-between min-h-screen p-4">
 
-    <!-- Hidden File Input for Device Upload Fallback -->
-    <input type="file" id="file-input" accept="image/*" class="hidden">
+  <!-- Header -->
+  <div class="w-full max-w-md flex justify-between items-center py-2 border-b border-gray-800">
+    <h1 class="text-lg font-bold text-[#00A884]">Office Scanner</h1>
+    <span class="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">Offline PNG</span>
+  </div>
 
-    <!-- 1. TOP APP BAR -->
-    <header class="w-full bg-wa-surface px-4 py-3 flex items-center justify-between border-b border-wa-border z-30 shadow-sm">
-        <div class="flex items-center space-x-3">
-            <button id="btn-back" class="p-1.5 rounded-full hover:bg-wa-panel text-wa-textPrimary active:bg-wa-panel transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <div class="flex flex-col">
-                <h1 id="app-title" class="text-base font-semibold text-wa-textPrimary leading-tight">Document Scanner</h1>
-                <span id="app-subtitle" class="text-xs text-wa-textSecondary">Position paper & tap shutter</span>
-            </div>
-        </div>
+  <!-- Preview Area -->
+  <div class="w-full max-w-md flex-1 my-4 flex items-center justify-center bg-[#111B21] rounded-lg overflow-hidden border border-gray-800 relative min-h-[400px]">
+    <img id="preview" class="hidden w-full h-auto object-contain" alt="Scanned Document">
+    <div id="placeholder" class="text-gray-400 text-center p-4">
+      <svg class="w-16 h-16 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h0.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <p>Tap button below to snap document</p>
+    </div>
+  </div>
 
-        <div class="flex items-center gap-2">
-            <!-- Upload from device fallback button -->
-            <button id="btn-upload" title="Upload Photo from Device" class="p-2 rounded-full hover:bg-wa-panel text-wa-textPrimary transition flex items-center gap-1.5 text-xs bg-wa-panel/60 border border-wa-border px-3">
-                <svg class="w-4 h-4 text-wa-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="hidden sm:inline">Upload</span>
-            </button>
-            
-            <button id="btn-toggle-camera" title="Switch Camera" class="p-2 rounded-full hover:bg-wa-panel text-wa-textPrimary transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-            </button>
-        </div>
-    </header>
+  <!-- Controls -->
+  <div class="w-full max-w-md flex flex-col gap-3 mb-4">
+    <!-- Hidden Camera Input -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
 
-    <!-- 2. MAIN VIEWPORT CONTAINER -->
-    <main class="flex-1 relative w-full flex items-center justify-center p-2 sm:p-4 overflow-hidden">
-        
-        <!-- CAMERA VIEWPORT -->
-        <div id="camera-frame" class="relative w-full max-w-lg h-full max-h-[78vh] bg-black rounded-2xl overflow-hidden border border-wa-border shadow-2xl flex items-center justify-center">
-            
-            <video id="webcam" autoplay playsinline class="w-full h-full object-contain bg-black"></video>
+    <!-- Shutter Button -->
+    <button onclick="document.getElementById('cameraInput').click()" class="w-full py-3 bg-[#00A884] text-black font-semibold rounded-full flex items-center justify-center gap-2 text-base active:opacity-90">
+      📷 Open Camera / Snap
+    </button>
 
-            <!-- Dynamic Live Corner Quad Overlay -->
-            <canvas id="live-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+    <!-- Save PNG Button -->
+    <button id="saveBtn" onclick="downloadPNG()" class="hidden w-full py-3 bg-blue-600 text-white font-semibold rounded-full text-base">
+      ⬇ Save High-Res PNG
+    </button>
+  </div>
 
-            <!-- Mode Badge -->
-            <div class="absolute top-3 left-3 bg-wa-panel/85 backdrop-blur-md px-3 py-1 rounded-full border border-wa-border text-xs text-wa-textPrimary flex items-center gap-2 z-20">
-                <span class="w-2 h-2 rounded-full bg-wa-green animate-pulse"></span>
-                <span>Manual Mode</span>
-            </div>
+  <canvas id="canvas" class="hidden"></canvas>
 
-            <!-- DIAGNOSTIC CAMERA ERROR / FALLBACK SCREEN -->
-            <div id="camera-error-screen" class="hidden absolute inset-0 bg-wa-surface p-5 z-40 flex flex-col items-center justify-center text-center overflow-y-auto">
-                <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mb-3 border border-rose-500/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
-                    </svg>
-                </div>
-                <h2 class="text-base font-semibold text-wa-textPrimary mb-1">Camera Access Blocked</h2>
-                <p id="error-message-details" class="text-xs text-wa-textSecondary mb-4 max-w-xs">Checking hardware permissions...</p>
+  <script>
+    const cameraInput = document.getElementById('cameraInput');
+    const preview = document.getElementById('preview');
+    const placeholder = document.getElementById('placeholder');
+    const saveBtn = document.getElementById('saveBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-                <!-- Helpful Diagnostic Steps -->
-                <div class="bg-wa-panel rounded-xl p-3 text-left text-xs text-wa-textSecondary w-full max-w-xs space-y-2 mb-4 border border-wa-border">
-                    <div class="font-semibold text-wa-textPrimary">Troubleshooting Options:</div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-wa-green font-bold">1.</span>
-                        <span>Ensure the page is running over <b>HTTPS</b> or <b>localhost</b>.</span>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-wa-green font-bold">2.</span>
-                        <span>Click browser address bar settings $\rightarrow$ Site Settings $\rightarrow$ <b>Allow Camera</b>.</span>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-wa-green font-bold">3.</span>
-                        <span>Use the <b>Upload Image</b> option below if on an embedded browser/WebView.</span>
-                    </div>
-                </div>
+    cameraInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-                <div class="flex flex-col gap-2 w-full max-w-xs">
-                    <button id="btn-retry-camera" class="w-full py-2.5 rounded-full bg-wa-green hover:bg-wa-greenDark text-wa-bg font-semibold text-xs transition active:scale-95 shadow">
-                        Retry Camera Access
-                    </button>
-                    <button id="btn-error-upload" class="w-full py-2.5 rounded-full bg-wa-panel hover:bg-wa-border text-wa-textPrimary font-medium text-xs transition border border-wa-border">
-                        Upload Document Image Instead
-                    </button>
-                </div>
-            </div>
-        </div>
+      const img = new Image();
+      img.onload = () => {
+        // Set canvas to full original photo resolution
+        canvas.width = img.width;
+        canvas.height = img.height;
 
-        <!-- CROP & PERSPECTIVE ADJUSTMENT SCREEN -->
-        <div id="crop-preview-frame" class="hidden relative w-full max-w-lg h-full max-h-[78vh] bg-wa-surface rounded-2xl overflow-hidden border border-wa-border shadow-2xl flex flex-col items-center justify-between p-3 fade-in">
-            
-            <div id="crop-wrapper" class="relative w-full flex-1 flex items-center justify-center bg-black/70 rounded-xl overflow-hidden border border-wa-border">
-                <canvas id="crop-canvas" class="max-w-full max-h-full object-contain rounded-lg"></canvas>
-                
-                <!-- Draggable Corner Handles -->
-                <div id="handles-container" class="absolute inset-0 z-30">
-                    <div id="handle-tl" class="crop-handle"></div>
-                    <div id="handle-tr" class="crop-handle"></div>
-                    <div id="handle-br" class="crop-handle"></div>
-                    <div id="handle-bl" class="crop-handle"></div>
-                </div>
+        // Draw image onto canvas
+        ctx.drawImage(img, 0, 0);
 
-                <!-- Touch Loupe Magnifier -->
-                <div id="magnifier">
-                    <canvas id="magnifier-canvas"></canvas>
-                </div>
-            </div>
-
-            <!-- Rotation & Quick Action Toolbar -->
-            <div class="w-full mt-2.5 flex items-center justify-between px-2">
-                <button id="btn-rotate" class="flex items-center gap-1.5 text-xs text-wa-textSecondary hover:text-wa-textPrimary py-1 px-3 rounded-lg bg-wa-panel border border-wa-border transition">
-                    <svg class="w-4 h-4 text-wa-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Rotate 90°</span>
-                </button>
-
-                <button id="btn-reset-crop" class="text-xs text-wa-textSecondary hover:text-wa-textPrimary py-1 px-3 rounded-lg bg-wa-panel border border-wa-border transition">
-                    Reset Corners
-                </button>
-            </div>
-
-            <!-- Filter Preset Bar -->
-            <div class="w-full mt-2 flex flex-col gap-1">
-                <span class="text-[10px] font-medium text-wa-textSecondary uppercase tracking-wider px-1">Filter Preset</span>
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                    <button id="filter-bw" onclick="setFilter('bw')" class="px-3.5 py-1.5 rounded-full bg-wa-green text-wa-bg text-xs font-semibold whitespace-nowrap transition">Clean B&W</button>
-                    <button id="filter-enhance" onclick="setFilter('enhance')" class="px-3.5 py-1.5 rounded-full bg-wa-panel text-wa-textPrimary text-xs font-medium whitespace-nowrap hover:bg-wa-border transition">High Contrast</button>
-                    <button id="filter-gray" onclick="setFilter('gray')" class="px-3.5 py-1.5 rounded-full bg-wa-panel text-wa-textPrimary text-xs font-medium whitespace-nowrap hover:bg-wa-border transition">Grayscale</button>
-                    <button id="filter-original" onclick="setFilter('original')" class="px-3.5 py-1.5 rounded-full bg-wa-panel text-wa-textPrimary text-xs font-medium whitespace-nowrap hover:bg-wa-border transition">Original</button>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- 3. BOTTOM ACTION TOOLBAR -->
-    <footer class="w-full bg-wa-surface border-t border-wa-border p-4 z-30">
-        <div class="max-w-lg mx-auto flex items-center justify-center">
-            
-            <!-- CAMERA SHUTTER BAR -->
-            <div id="bar-camera" class="w-full flex items-center justify-between px-6">
-                <div class="w-12"></div> <!-- Left Spacer -->
-
-                <!-- WhatsApp Floating Camera Shutter Button -->
-                <button id="btn-shutter" title="Capture Document" class="relative group p-1 rounded-full border-2 border-wa-green bg-transparent hover:scale-105 active:scale-95 transition-all">
-                    <div class="w-14 h-14 rounded-full bg-wa-green group-hover:bg-wa-greenLight flex items-center justify-center shadow-lg shadow-wa-green/30">
-                        <svg class="w-7 h-7 text-wa-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 9a2 2 0 012-2h0.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <circle cx="12" cy="13" r="3" stroke-width="2" />
-                        </svg>
-                    </div>
-                </button>
-
-                <div class="w-12"></div> <!-- Right Spacer -->
-            </div>
-
-            <!-- PREVIEW / EXPORT BAR -->
-            <div id="bar-preview" class="hidden w-full flex items-center justify-between gap-3">
-                <button id="btn-retake" class="flex-1 py-3 px-4 rounded-full bg-wa-panel hover:bg-wa-border text-wa-textPrimary text-xs font-semibold transition active:scale-95 border border-wa-border flex items-center justify-center gap-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Retake
-                </button>
-
-                <button id="btn-export-png" class="flex-1 py-3 px-4 rounded-full bg-wa-green hover:bg-wa-greenDark text-wa-bg text-xs font-bold transition active:scale-95 shadow-md shadow-wa-green/20 flex items-center justify-center gap-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Save PNG
-                </button>
-            </div>
-
-        </div>
-    </footer>
-
-    <!-- Processing Canvases (Invisible Workstations) -->
-    <canvas id="proc-canvas" class="hidden"></canvas>
-    <canvas id="output-canvas" class="hidden"></canvas>
-
-    <!-- CLIENT-SIDE CV ENGINE & APP CONTROLLER -->
-    <script>
-        /**
-         * WhatsApp-Style Office Document Scanner
-         * Client-Side CV Pipeline & UI Logic
-         */
-
-        // Elements
-        const webcam = document.getElementById('webcam');
-        const liveOverlay = document.getElementById('live-overlay');
-        const liveCtx = liveOverlay.getContext('2d');
-        const cropCanvas = document.getElementById('crop-canvas');
-        const cropCtx = cropCanvas.getContext('2d');
-        const procCanvas = document.getElementById('proc-canvas');
-        const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
-        const outputCanvas = document.getElementById('output-canvas');
-        const outputCtx = outputCanvas.getContext('2d');
-        const fileInput = document.getElementById('file-input');
-
-        const magnifier = document.getElementById('magnifier');
-        const magnifierCanvas = document.getElementById('magnifier-canvas');
-        const magnifierCtx = magnifierCanvas.getContext('2d');
-
-        const handles = {
-            tl: document.getElementById('handle-tl'),
-            tr: document.getElementById('handle-tr'),
-            br: document.getElementById('handle-br'),
-            bl: document.getElementById('handle-bl')
-        };
-
-        // State variables
-        let currentStream = null;
-        let facingMode = 'environment';
-        let liveDetectedQuad = null;
-        let cropCorners = null; // Normalized array [{x, y}, ...]
-        let isProcessingFrame = false;
-        let activeFilter = 'bw';
-        let rotationAngle = 0; // 0, 90, 180, 270
-        let loadedImageSource = null; // HTMLImageElement if uploaded, or video stream
-
-        // --- 1. ROBUST CAMERA LAUNCHER & FALLBACKS ---
-        window.addEventListener('DOMContentLoaded', () => {
-            initCamera();
-            setupHandleDragging();
-        });
-
-        async function initCamera() {
-            hideErrorScreen();
-            loadedImageSource = null;
-
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-
-            // Progressive constraints fallback order
-            const constraintSets = [
-                { video: { width: { ideal: 3840 }, height: { ideal: 2160 }, facingMode: { exact: 'environment' } } },
-                { video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'environment' } },
-                { video: { facingMode: 'environment' } },
-                { video: { facingMode: 'user' } },
-                { video: true } // Absolute basic fallback
-            ];
-
-            let stream = null;
-            let lastError = null;
-
-            for (const constraints of constraintSets) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    if (stream) break;
-                } catch (err) {
-                    lastError = err;
-                    console.warn('Constraint fallback step:', constraints, err);
-                }
-            }
-
-            if (stream) {
-                currentStream = stream;
-                webcam.srcObject = stream;
-                webcam.onloadedmetadata = () => {
-                    webcam.play();
-                    resizeLiveOverlay();
-                    window.addEventListener('resize', resizeLiveOverlay);
-                    requestAnimationFrame(processLivePreview);
-                };
-            } else {
-                showErrorScreen(lastError);
-            }
+        // Apply high-contrast filter for office documents
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          // Convert to Grayscale & Boost Contrast
+          let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          avg = avg > 128 ? Math.min(255, avg * 1.15) : Math.max(0, avg * 0.85);
+          data[i] = avg;     // R
+          data[i + 1] = avg; // G
+          data[i + 2] = avg; // B
         }
+        ctx.putImageData(imageData, 0, 0);
 
-        function showErrorScreen(error) {
-            const screen = document.getElementById('camera-error-screen');
-            const details = document.getElementById('error-message-details');
-            screen.classList.remove('hidden');
+        // Display preview
+        preview.src = canvas.toDataURL('image/png');
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+      };
+      img.src = URL.createObjectURL(file);
+    });
 
-            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    function downloadPNG() {
+      const link = document.createElement('a');
+      link.download = `office_scan_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    }
+  </script>
+</body>
+</html>
 
-            if (!isSecure) {
-                details.innerHTML = "Web browsers restrict camera access to <b>HTTPS</b> or <b>localhost</b>. Please launch this page o
